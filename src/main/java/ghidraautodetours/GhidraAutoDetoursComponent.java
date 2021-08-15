@@ -8,11 +8,13 @@ import javax.swing.JTextArea;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.Msg;
 import resources.Icons;
+import resources.ResourceManager;
 
 public class GhidraAutoDetoursComponent extends ComponentProvider {
 
@@ -24,6 +26,11 @@ public class GhidraAutoDetoursComponent extends ComponentProvider {
 	public GhidraAutoDetoursComponent(Plugin plugin, String owner) {
 		super(plugin.getTool(), owner, owner);
 		gadplugin = (GhidraAutoDetoursPlugin) plugin;
+		
+		setIcon(ResourceManager.loadImage("images/logo.png"));
+		setDefaultWindowPosition(WindowPosition.BOTTOM);
+		setVisible(true);
+		
 		buildPanel();
 		createActions();
 	}
@@ -39,7 +46,7 @@ public class GhidraAutoDetoursComponent extends ComponentProvider {
 
 	// TODO: Customize actions
 	private void createActions() {
-		action = new DockingAction("My Action", getName()) {
+		action = new DockingAction("My Action", GhidraAutoDetoursPlugin.NAME) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				gadplugin.startAutoDetoursAnalysis();
