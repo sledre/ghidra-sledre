@@ -15,22 +15,14 @@
  */
 package ghidraautodetours;
 
-import java.awt.BorderLayout;
-
-import javax.swing.*;
-
-import docking.ActionContext;
-import docking.ComponentProvider;
-import docking.action.DockingAction;
-import docking.action.ToolBarData;
-import ghidra.app.ExamplesPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import resources.Icons;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Program;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -38,15 +30,21 @@ import resources.Icons;
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.STABLE,
-	packageName = ExamplesPluginPackage.NAME,
-	category = PluginCategoryNames.EXAMPLES,
-	shortDescription = "Plugin short description goes here.",
-	description = "Plugin long description goes here."
+	packageName = GhidraAutoDetoursPlugin.NAME,
+	category = PluginCategoryNames.MISC,
+	shortDescription = "GhidraAutoDetours is an integration of AutoDetours project to Ghidra.",
+	description = "GhidraAutoDetours allow you to query AutoDetours to recover samples analyzed or submit samples open in Ghidra. The traces provided by AutoDetours are directly integrated to Ghidra.",
+	servicesRequired = {
+		ProgramManager.class
+	}
 )
 //@formatter:on
 public class GhidraAutoDetoursPlugin extends ProgramPlugin {
+	public static final String NAME = "GhidraAutoDetours";
 
-	MyProvider provider;
+	GhidraAutoDetoursComponent ui;
+
+	private ProgramManager pm;
 
 	/**
 	 * Plugin constructor.
@@ -58,59 +56,23 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 
 		// TODO: Customize provider (or remove if a provider is not desired)
 		String pluginName = getName();
-		provider = new MyProvider(this, pluginName);
-
-		// TODO: Customize help (or remove if help is not desired)
-		String topicName = this.getClass().getPackage().getName();
-		String anchorName = "HelpAnchor";
-		provider.setHelpLocation(new HelpLocation(topicName, anchorName));
+		ui = new GhidraAutoDetoursComponent(this, pluginName);
 	}
 
 	@Override
 	public void init() {
 		super.init();
 
+		pm = tool.getService(ProgramManager.class);
+
 		// TODO: Acquire services if necessary
 	}
 
-	// TODO: If provider is desired, it is recommended to move it to its own file
-	private static class MyProvider extends ComponentProvider {
-
-		private JPanel panel;
-		private DockingAction action;
-
-		public MyProvider(Plugin plugin, String owner) {
-			super(plugin.getTool(), owner, owner);
-			buildPanel();
-			createActions();
-		}
-
-		// Customize GUI
-		private void buildPanel() {
-			panel = new JPanel(new BorderLayout());
-			JTextArea textArea = new JTextArea(5, 25);
-			textArea.setEditable(false);
-			panel.add(new JScrollPane(textArea));
-			setVisible(true);
-		}
-
-		// TODO: Customize actions
-		private void createActions() {
-			action = new DockingAction("My Action", getName()) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					Msg.showInfo(getClass(), panel, "Custom Action", "Hello!");
-				}
-			};
-			action.setToolBarData(new ToolBarData(Icons.ADD_ICON, null));
-			action.setEnabled(true);
-			action.markHelpUnnecessary();
-			dockingTool.addLocalAction(this, action);
-		}
-
-		@Override
-		public JComponent getComponent() {
-			return panel;
-		}
+	public void startAutoDetoursAnalysis() {
+		Program program = pm.getCurrentProgram();
+		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
+		GhidraAutoDetoursAnalyzer gadAnalyzer = new GhidraAutoDetoursAnalyzer();
+		analysisManager.scheduleOneTimeAnalysis(gadAnalyzer, new AddressSet());
 	}
+
 }
