@@ -40,7 +40,7 @@ import ghidra.program.model.listing.Program;
 )
 //@formatter:on
 public class GhidraAutoDetoursPlugin extends ProgramPlugin {
-	public static final String NAME = "GhidraAutoDetours";
+	public static final String NAME = "AutoDetours Client";
 
 	GhidraAutoDetoursComponent ui;
 
@@ -55,8 +55,7 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		super(tool, true, true);
 
 		// TODO: Customize provider (or remove if a provider is not desired)
-		String pluginName = getName();
-		ui = new GhidraAutoDetoursComponent(this, pluginName);
+		ui = new GhidraAutoDetoursComponent(this, NAME);
 	}
 
 	@Override
