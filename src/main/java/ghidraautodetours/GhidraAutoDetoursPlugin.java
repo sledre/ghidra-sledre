@@ -23,6 +23,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -40,9 +41,10 @@ import ghidra.program.model.listing.Program;
 )
 //@formatter:on
 public class GhidraAutoDetoursPlugin extends ProgramPlugin {
-	public static final String NAME = "AutoDetours Client";
+	public static final String NAME = "GhidraAutoDetoursPlugin";
+	public static final String GUI_NAME = "AutoDetours Client";
 
-	GhidraAutoDetoursComponent ui;
+	GhidraAutoDetoursComponent uiProvider;
 
 	private ProgramManager pm;
 
@@ -55,7 +57,7 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		super(tool, true, true);
 
 		// TODO: Customize provider (or remove if a provider is not desired)
-		ui = new GhidraAutoDetoursComponent(this, NAME);
+		uiProvider = new GhidraAutoDetoursComponent(this, GUI_NAME, NAME);
 	}
 
 	@Override
@@ -66,6 +68,29 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 
 		// TODO: Acquire services if necessary
 	}
+	
+	@Override
+	public void dispose() {
+		uiProvider.dispose();
+		super.dispose();
+	}
+
+	@Override
+	protected void programDeactivated(Program program) {
+		uiProvider.setProgram(null);
+	}
+
+	@Override
+	protected void programActivated(Program program) {
+		uiProvider.setProgram(program);
+	}
+
+	@Override
+	protected void locationChanged(ProgramLocation loc) {
+		if (loc != null) {
+			uiProvider.setProgram(loc.getProgram());
+		}
+	}
 
 	public void startAutoDetoursAnalysis() {
 		Program program = pm.getCurrentProgram();
@@ -73,5 +98,4 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		GhidraAutoDetoursAnalyzer gadAnalyzer = new GhidraAutoDetoursAnalyzer();
 		analysisManager.scheduleOneTimeAnalysis(gadAnalyzer, new AddressSet());
 	}
-
 }
