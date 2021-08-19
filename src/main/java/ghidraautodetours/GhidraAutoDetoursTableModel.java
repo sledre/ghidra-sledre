@@ -7,10 +7,13 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
+import ghidra.util.table.field.AbstractProgramLocationTableColumn;
+import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.TaskMonitor;
 import ghidraautodetours.GhidraAutoDetoursParser.Hook;
 
@@ -60,8 +63,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 	protected TableColumnDescriptor<Hook> createTableColumnDescriptor() {
 		TableColumnDescriptor<Hook> descriptor = new TableColumnDescriptor<>();
 
-		/*descriptor.addVisibleColumn(
-			DiscoverableTableUtils.adaptColumForModel(this, new HookLocationColumn()), 1, true);*/
+		descriptor.addVisibleColumn(new HookLocationColumn(), 1, true);
 		descriptor.addVisibleColumn(new HookNameColumn());
 		descriptor.addVisibleColumn(new HookArgsColumn());
 		descriptor.addVisibleColumn(new HookRetColumn());
@@ -78,7 +80,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 	// Inner Classes
 	//==================================================================================================
 
-	/*private static class HookLocationColumn
+	private static class HookLocationColumn
 	extends AbstractProgramLocationTableColumn<Hook, AddressBasedLocation> {
 
 		@Override
@@ -97,10 +99,10 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 		@Override
 		public ProgramLocation getProgramLocation(Hook hook, Settings settings,
 				Program program, ServiceProvider serviceProvider) {
-			return program.get;
+			return new ProgramLocation(program, program.getAddressFactory().getDefaultAddressSpace().getAddress(hook.getRetAddr()));
 		}
 
-	}*/
+	}
 
 	private static class HookNameColumn
 	extends AbstractProgramBasedDynamicTableColumn<Hook, String> {
