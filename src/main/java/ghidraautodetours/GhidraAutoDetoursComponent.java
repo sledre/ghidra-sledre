@@ -60,12 +60,11 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 		if (goToService != null) {
 			table.installNavigation(goToService, goToService.getDefaultNavigatable());
 		}
-		
 
-		//tableFilterPanel = new GhidraTableFilterPanel<>(table, hookTableModel);
+		tableFilterPanel = new GhidraTableFilterPanel<>(table, hookTableModel);
 		
 		panel.add(tablePanel, BorderLayout.CENTER);
-		//panel.add(tableFilterPanel, BorderLayout.SOUTH);
+		panel.add(tableFilterPanel, BorderLayout.SOUTH);
 	}
 
 	// TODO: Customize actions
