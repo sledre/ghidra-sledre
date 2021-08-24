@@ -3,13 +3,11 @@ package ghidraautodetours;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -58,6 +56,11 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 		
 		table.setName("AutoDetours Results Table");
 		
+		GoToService goToService = tool.getService(GoToService.class);
+		if (goToService != null) {
+			table.installNavigation(goToService, goToService.getDefaultNavigatable());
+		}
+		
 
 		//tableFilterPanel = new GhidraTableFilterPanel<>(table, hookTableModel);
 		
@@ -90,7 +93,6 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 
 	@Override
 	public void componentShown() {
-		System.out.println("toto333");
 		hookTableModel.reload(currentProgram);
 	}
 

@@ -18,6 +18,7 @@ package ghidraautodetours;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -36,7 +37,8 @@ import ghidra.program.util.ProgramLocation;
 	shortDescription = "GhidraAutoDetours is an integration of AutoDetours project to Ghidra.",
 	description = "GhidraAutoDetours allow you to query AutoDetours to recover samples analyzed or submit samples open in Ghidra. The traces provided by AutoDetours are directly integrated to Ghidra.",
 	servicesRequired = {
-		ProgramManager.class
+		ProgramManager.class,
+		GoToService.class
 	}
 )
 //@formatter:on
@@ -57,7 +59,7 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		super(tool, true, true);
 
 		// TODO: Customize provider (or remove if a provider is not desired)
-		uiProvider = new GhidraAutoDetoursComponent(this, GUI_NAME, NAME);
+		
 	}
 
 	@Override
@@ -65,6 +67,8 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		super.init();
 
 		pm = tool.getService(ProgramManager.class);
+		
+		uiProvider = new GhidraAutoDetoursComponent(this, GUI_NAME, NAME);
 
 		// TODO: Acquire services if necessary
 	}
