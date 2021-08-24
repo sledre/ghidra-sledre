@@ -130,7 +130,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 		public String getValue(Hook hook, Settings settings, Program data, ServiceProvider serviceProvider)
 				throws IllegalArgumentException {
 			// TODO Auto-generated method stub
-			return null;
+			return String.join(", ", hook.getFncArgs());
 		}
 	}
 
