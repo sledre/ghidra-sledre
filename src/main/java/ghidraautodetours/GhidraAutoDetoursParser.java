@@ -3,6 +3,8 @@ package ghidraautodetours;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 
 import com.google.gson.Gson;
@@ -15,27 +17,15 @@ import com.google.gson.stream.JsonWriter;
 
 public class GhidraAutoDetoursParser {
 
-	private String path;
-	private ArrayList<MemorySpace> memoryMap;
-	private ArrayList<Hook> hookResults;
-	private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	public static AutoDetoursTraces parseJson(String results) throws IOException {
+		Reader in = new StringReader(results);
+		AutoDetoursTraces traces = new AutoDetoursTraces();
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		
+		ArrayList<MemorySpace> memoryMap = new ArrayList<MemorySpace>();
+		ArrayList<Hook> hookResults = new ArrayList<Hook>();
 
-	public GhidraAutoDetoursParser(String path) {
-		this.path = path;
-		this.memoryMap = new ArrayList<MemorySpace>();
-		this.hookResults = new ArrayList<Hook>();
-	}
-
-	public ArrayList<MemorySpace> getMemoryMap() {
-		return memoryMap;
-	}
-
-	public ArrayList<Hook> getHookResults() {
-		return hookResults;
-	}
-
-	public void parseJson() throws IOException {
-		try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+		try (BufferedReader br = new BufferedReader(in)) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				JsonLineType type = gson.fromJson(line, JsonLineType.class);
@@ -50,6 +40,10 @@ public class GhidraAutoDetoursParser {
 				}
 			}
 		}
+		traces.setHookResults(hookResults);
+		traces.setMemoryMap(memoryMap);
+		
+		return traces;
 	}
 
 	private static class HexaJsonAdapter extends TypeAdapter<Integer> {
@@ -66,10 +60,50 @@ public class GhidraAutoDetoursParser {
 	}
 
 	private static class JsonLineType {
+		
 		private String type;
+		
+	}
+
+	static class AutoDetoursTraces {
+
+		private ArrayList<MemorySpace> memoryMap;
+		private ArrayList<Hook> hookResults;
+		
+		public AutoDetoursTraces() {
+			super();
+		}
+
+		public AutoDetoursTraces(ArrayList<MemorySpace> memoryMap, ArrayList<Hook> hookResults) {
+			super();
+			this.memoryMap = memoryMap;
+			this.hookResults = hookResults;
+		}
+
+		public ArrayList<MemorySpace> getMemoryMap() {
+			return memoryMap;
+		}
+
+		public void setMemoryMap(ArrayList<MemorySpace> memoryMap) {
+			this.memoryMap = memoryMap;
+		}
+
+		public ArrayList<Hook> getHookResults() {
+			return hookResults;
+		}
+
+		public void setHookResults(ArrayList<Hook> hookResults) {
+			this.hookResults = hookResults;
+		}
+		
+		public void resetState() {
+			memoryMap.clear();
+			hookResults.clear();
+		}
 	}
 
 	static class MemorySpace {
+		
 		private String filename;
 
 		@SerializedName(value = "begin_addr")

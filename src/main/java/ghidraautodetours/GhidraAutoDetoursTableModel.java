@@ -43,7 +43,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 			return;
 		}
 
-		String path = "/Users/baptistin/ghidra_scripts/ed01ebfbc9eb5bbea545af4d01bf5f1071661840480439c6e5babe8e080e41aa_Detours.jsonl";
+		/*String path = "/Users/baptistin/ghidra_scripts/ed01ebfbc9eb5bbea545af4d01bf5f1071661840480439c6e5babe8e080e41aa_Detours.jsonl";
 		GhidraAutoDetoursParser parser = new GhidraAutoDetoursParser(path);
 
 		try {
@@ -55,7 +55,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 
 		for (Hook h : parser.getHookResults()) {
 			accumulator.add(h);
-		}
+		}*/
 	}
 
 	@Override

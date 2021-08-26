@@ -1,6 +1,8 @@
 package ghidraautodetours;
 
 import java.awt.BorderLayout;
+import java.io.IOException;
+
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import docking.ActionContext;
@@ -8,7 +10,6 @@ import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.app.services.GoToService;
-import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Program;
@@ -21,13 +22,13 @@ import resources.Icons;
 import resources.ResourceManager;
 
 public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
-	
+
 	private JPanel panel;
-	private DockingAction action;
-	
+	private DockingAction addCommentsAction;
+
 	private GhidraAutoDetoursPlugin gadplugin;
 	private Program currentProgram;
-	
+
 	private GhidraThreadedTablePanel<Hook> tablePanel;
 	private GhidraTableFilterPanel<Hook> tableFilterPanel;
 	private GhidraTable table;
@@ -36,50 +37,56 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 	public GhidraAutoDetoursComponent(Plugin plugin, String guiName, String name) {
 		super(plugin.getTool(), guiName, name);
 		gadplugin = (GhidraAutoDetoursPlugin) plugin;
-		
+
 		setIcon(ResourceManager.loadImage("images/logo.png"));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
 		buildTable();
-		createActions();
 		setVisible(true);
+		createActions();
 	}
 
 	// Customize GUI
 	private void buildTable() {
 		panel = new JPanel(new BorderLayout());
-		
+
 		hookTableModel = new GhidraAutoDetoursTableModel(gadplugin.getTool(), currentProgram, null);
 		tablePanel = new GhidraThreadedTablePanel<>(hookTableModel);
-		
+
 		table = tablePanel.getTable();
-		
+
 		table.setName("AutoDetours Results Table");
-		
+
 		GoToService goToService = tool.getService(GoToService.class);
 		if (goToService != null) {
 			table.installNavigation(goToService, goToService.getDefaultNavigatable());
 		}
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, hookTableModel);
-		
+
 		panel.add(tablePanel, BorderLayout.CENTER);
 		panel.add(tableFilterPanel, BorderLayout.SOUTH);
 	}
 
 	// TODO: Customize actions
 	private void createActions() {
-		action = new DockingAction("My Action", GhidraAutoDetoursPlugin.NAME) {
+		addCommentsAction = new DockingAction("Add traces comments", gadplugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				gadplugin.startAutoDetoursAnalysis();
-				Msg.showInfo(getClass(), panel, "Custom Action", "Hello!");
+				try {
+					gadplugin.addTracesComments();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				Msg.showInfo(getClass(), panel, GhidraAutoDetoursPlugin.GUI_NAME,
+						"Traces comments successfully added !");
 			}
 		};
-		action.setToolBarData(new ToolBarData(Icons.ADD_ICON, null));
-		action.setEnabled(true);
-		action.markHelpUnnecessary();
-		//dockingTool.addLocalAction(this, action);
+		addCommentsAction.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/table_go.png"), null));
+		addCommentsAction.setEnabled(true);
+		addCommentsAction.markHelpUnnecessary();
+		dockingTool.addLocalAction(this, addCommentsAction);
 	}
 
 	/**
@@ -103,18 +110,18 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 	GhidraTable getTable() {
 		return table;
 	}
-	
+
 	void dispose() {
 		currentProgram = null;
 		removeFromTool();
 		tablePanel.dispose();
-		//tableFilterPanel.dispose();
+		// tableFilterPanel.dispose();
 	}
-	
+
 	public Program getProgram() {
 		return currentProgram;
 	}
-	
+
 	void setProgram(Program program) {
 		if (program == currentProgram) {
 			return;
