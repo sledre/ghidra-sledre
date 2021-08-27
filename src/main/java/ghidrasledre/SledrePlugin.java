@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidraautodetours;
+package ghidrasledre;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import generic.continues.RethrowContinuesFactory;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.MemoryByteProvider;
@@ -34,17 +32,11 @@ import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidraautodetours.GhidraAutoDetoursParser.AutoDetoursTraces;
-import ghidraautodetours.GhidraAutoDetoursParser.Hook;
-import ghidraautodetours.GhidraAutoDetoursParser.MemorySpace;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -52,21 +44,21 @@ import ghidraautodetours.GhidraAutoDetoursParser.MemorySpace;
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.STABLE,
-	packageName = GhidraAutoDetoursPlugin.NAME,
+	packageName = SledrePlugin.NAME,
 	category = PluginCategoryNames.MISC,
-	shortDescription = "GhidraAutoDetours is an integration of AutoDetours project to Ghidra.",
-	description = "GhidraAutoDetours allow you to query AutoDetours to recover samples analyzed or submit samples open in Ghidra. The traces provided by AutoDetours are directly integrated to Ghidra.",
+	shortDescription = "Ghidrasledre is an integration of sledre project to Ghidra.",
+	description = "Ghidrasledre allow you to query sledre to recover samples analyzed or submit samples open in Ghidra. The traces provided by sledre are directly integrated to Ghidra.",
 	servicesRequired = {
 		ProgramManager.class,
 		GoToService.class
 	}
 )
 //@formatter:on
-public class GhidraAutoDetoursPlugin extends ProgramPlugin {
-	public static final String NAME = "GhidraAutoDetoursPlugin";
-	public static final String GUI_NAME = "AutoDetours Client";
+public class SledrePlugin extends ProgramPlugin {
+	public static final String NAME = "ghidrasledreplugin";
+	public static final String GUI_NAME = "sledre";
 
-	GhidraAutoDetoursComponent uiProvider;
+	TracesTableProvider uiProvider;
 
 	private ProgramManager pm;
 
@@ -75,7 +67,7 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 	 * 
 	 * @param tool The plugin tool that this plugin is added to.
 	 */
-	public GhidraAutoDetoursPlugin(PluginTool tool) {
+	public SledrePlugin(PluginTool tool) {
 		super(tool, true, true);
 
 		// TODO: Customize provider (or remove if a provider is not desired)
@@ -88,7 +80,7 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 
 		pm = tool.getService(ProgramManager.class);
 
-		uiProvider = new GhidraAutoDetoursComponent(this, GUI_NAME, NAME);
+		uiProvider = new TracesTableProvider(this, GUI_NAME, NAME);
 
 		// TODO: Acquire services if necessary
 	}
@@ -144,8 +136,8 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 	public void addTracesComments() throws IOException {
 		Program program = pm.getCurrentProgram();
 		
-		AutoDetoursAPI api = new AutoDetoursAPI(new URL("http://localhost:8080/"));
-		AutoDetoursTraces traces = null;
+		SledreAPI api = new SledreAPI(new URL("http://localhost:8080/"));
+		Traces traces = null;
 		try {
 			traces = api.getTraces(program);
 		} catch (IOException | InterruptedException e) {
@@ -154,9 +146,9 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		}
 		
 		if (traces != null) {
-			int transId = program.startTransaction("AutoDetoursAddComments");
+			int transId = program.startTransaction("sledreAddComment");
 			String comment;
-			for (Hook h : traces.getHookResults()) {
+			for (TracesHook h : traces.getHookResults()) {
 				Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(h.getRetAddr());
 				Instruction inst = program.getListing().getInstructionBefore(addr);
 	

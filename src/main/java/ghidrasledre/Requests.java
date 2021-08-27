@@ -1,4 +1,4 @@
-package ghidraautodetours;
+package ghidrasledre;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -11,7 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
-public class AutoDetoursAPIRequest {
+public class Requests {
 	public static <T> T get(URL url, Class<T> t) throws IOException {
 		T obj = null;
 		
