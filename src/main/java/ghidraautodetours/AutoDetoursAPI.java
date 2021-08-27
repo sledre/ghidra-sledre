@@ -31,24 +31,26 @@ public class AutoDetoursAPI {
 
 	// TODO : Provide a list to choose which detours jobs
 
-	public AutoDetoursTraces getTraces(Program program) throws IOException {
+	public AutoDetoursTraces getTraces(Program program) throws IOException, InterruptedException {
 		// URL result URL = new URL(url, "/api/jobs/5cc9590f-360f-4480-b434-00714a96934a/download_results/");
+		AutoDetoursAPIRequest.connectivityCheck(url);
 		String sha256 = program.getExecutableSHA256();
 
 		AutoDetoursTraces traces = null;
 		AutoDetoursAPIJob job = null;
+		// TODO : also upload the binary when not present
 		try {
-			 job = getLastDetoursJob(sha256);
-
+			job = getLastDetoursJob(sha256);
 		} catch (NoSuchElementException e) {
-			createDetoursJob(sha256);
-			//sleep 30sec and check
-			// TODO : also upload the binary when not rpesent
+			job = createDetoursJob(sha256);
+			while (!job.isFinished()) {
+				Thread.sleep(10);
+				job = getJob(job.getId());
+			}
 		}
-		
-		if (job != null) {
+
+		if (job != null && job.isDetours() && job.isSuccess()) {
 			String results = getJobResults(job.getId());
-			System.out.println(results);
 			traces = GhidraAutoDetoursParser.parseJson(results);
 		}
 
@@ -61,7 +63,14 @@ public class AutoDetoursAPI {
 
 		return malware;
 	}
-	
+
+	private AutoDetoursAPIJob getJob(String jobId) throws IOException {
+		URL jobURL = new URL(url, String.format("/api/jobs/%s/", jobId));
+		AutoDetoursAPIJob job = AutoDetoursAPIRequest.get(jobURL, AutoDetoursAPIJob.class);
+
+		return job;
+	}
+
 	private String getJobResults(String jobId) throws IOException {
 		URL jobResultURL = new URL(url, String.format("/api/jobs/%s/download_results/", jobId));
 		return AutoDetoursAPIRequest.rawGet(jobResultURL);
@@ -69,17 +78,17 @@ public class AutoDetoursAPI {
 
 	// TODO : Add Analysis time option
 	// TODO : finish this
-	private void createDetoursJob(String sha256) throws MalformedURLException {
+	private AutoDetoursAPIJob createDetoursJob(String sha256) throws IOException {
 		AutoDetoursJobRequest jobReq = new AutoDetoursJobRequest("Detours", 30, sha256);
 		URL jobURL = new URL(url, String.format("/api/jobs/"));
-		//AutoDetoursAPIRequest.post(url, jobReq);
+		AutoDetoursAPIJob job = AutoDetoursAPIRequest.post(jobURL, jobReq, AutoDetoursAPIJob.class);
+		return job;
 	}
 
 	private AutoDetoursAPIJob getLastDetoursJob(String sha256) throws NoSuchElementException, IOException {
 		AutoDetoursAPIMalware malware = getMalware(sha256);
 
-		return malware.getJobs().stream().filter(j -> j.getState().equals("DONE"))
-				.filter(j -> j.getJobType().equals("Detours"))
+		return malware.getJobs().stream().filter(j -> j.isSuccess()).filter(j -> j.isDetours())
 				.sorted((m1, m2) -> m2.getEndTime().compareTo(m1.getEndTime())).findFirst().get();
 	}
 
@@ -101,7 +110,7 @@ public class AutoDetoursAPI {
 	}
 
 	static class AutoDetoursAPIJob {
-
+		// TODO : add isfinished etc..
 		private String id;
 
 		@SerializedName(value = "job_type")
@@ -131,6 +140,18 @@ public class AutoDetoursAPI {
 			this.creationTime = creationTime;
 			this.startTime = startTime;
 			this.endTime = endTime;
+		}
+
+		public Boolean isFinished() {
+			return state.equals("DONE") || state.equals("TIMED_OUT");
+		}
+
+		public Boolean isSuccess() {
+			return state.equals("DONE");
+		}
+
+		public Boolean isDetours() {
+			return jobType.equals("Detours");
 		}
 
 		public String getId() {
