@@ -36,6 +36,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.ProgramLocation;
 
 /**
@@ -136,11 +137,11 @@ public class SledrePlugin extends ProgramPlugin {
 	public void addTracesComments() throws IOException {
 		Program program = pm.getCurrentProgram();
 		
-		SledreAPI api = new SledreAPI(new URL("http://localhost:8080/"));
+		SledreAPI api = new SledreAPI(new URL("http://localhost:8080/"), program);
 		Traces traces = null;
 		try {
-			traces = api.getTraces(program);
-		} catch (IOException | InterruptedException e) {
+			traces = api.getTraces();
+		} catch (IOException | InterruptedException | MemoryAccessException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
