@@ -145,22 +145,29 @@ public class GhidraAutoDetoursPlugin extends ProgramPlugin {
 		Program program = pm.getCurrentProgram();
 		
 		AutoDetoursAPI api = new AutoDetoursAPI(new URL("http://localhost:8080/"));
-		AutoDetoursTraces traces = api.getTraces(program);
-		
-		
-		int transId = program.startTransaction("AutoDetoursAddComments");
-		String comment;
-		for (Hook h : traces.getHookResults()) {
-			Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(h.getRetAddr());
-			Instruction inst = program.getListing().getInstructionBefore(addr);
-
-			comment = String.format("%s(%s) -> %s", h.getFncName(), String.join(", ", h.getFncArgs()),
-					h.getFncRet());
-			System.out.println(comment);
-			SetCommentCmd cmd = new SetCommentCmd(inst.getAddress(), CodeUnit.PRE_COMMENT, comment); // TODO : add option to choose
-			cmd.applyTo(program);
+		AutoDetoursTraces traces = null;
+		try {
+			traces = api.getTraces(program);
+		} catch (IOException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		program.endTransaction(transId, true);
+		
+		if (traces != null) {
+			int transId = program.startTransaction("AutoDetoursAddComments");
+			String comment;
+			for (Hook h : traces.getHookResults()) {
+				Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(h.getRetAddr());
+				Instruction inst = program.getListing().getInstructionBefore(addr);
+	
+				comment = String.format("%s(%s) -> %s", h.getFncName(), String.join(", ", h.getFncArgs()),
+						h.getFncRet());
+				System.out.println(comment);
+				SetCommentCmd cmd = new SetCommentCmd(inst.getAddress(), CodeUnit.PRE_COMMENT, comment); // TODO : add option to choose
+				cmd.applyTo(program);
+			}
+			program.endTransaction(transId, true);
+		}
 	}
 
 	public void startAutoDetoursAnalysis() {
