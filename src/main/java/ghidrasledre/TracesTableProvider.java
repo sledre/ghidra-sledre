@@ -1,4 +1,4 @@
-package ghidraautodetours;
+package ghidrasledre;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
@@ -17,26 +17,24 @@ import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.GhidraThreadedTablePanel;
-import ghidraautodetours.GhidraAutoDetoursParser.Hook;
-import resources.Icons;
 import resources.ResourceManager;
 
-public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
+public class TracesTableProvider extends ComponentProviderAdapter {
 
 	private JPanel panel;
 	private DockingAction addCommentsAction;
 
-	private GhidraAutoDetoursPlugin gadplugin;
+	private SledrePlugin gadplugin;
 	private Program currentProgram;
 
-	private GhidraThreadedTablePanel<Hook> tablePanel;
-	private GhidraTableFilterPanel<Hook> tableFilterPanel;
+	private GhidraThreadedTablePanel<TracesHook> tablePanel;
+	private GhidraTableFilterPanel<TracesHook> tableFilterPanel;
 	private GhidraTable table;
-	GhidraAutoDetoursTableModel hookTableModel;
+	TracesTableModel hookTableModel;
 
-	public GhidraAutoDetoursComponent(Plugin plugin, String guiName, String name) {
+	public TracesTableProvider(Plugin plugin, String guiName, String name) {
 		super(plugin.getTool(), guiName, name);
-		gadplugin = (GhidraAutoDetoursPlugin) plugin;
+		gadplugin = (SledrePlugin) plugin;
 
 		setIcon(ResourceManager.loadImage("images/logo.png"));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
@@ -50,7 +48,7 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 	private void buildTable() {
 		panel = new JPanel(new BorderLayout());
 
-		hookTableModel = new GhidraAutoDetoursTableModel(gadplugin.getTool(), currentProgram, null);
+		hookTableModel = new TracesTableModel(gadplugin.getTool(), currentProgram, null);
 		tablePanel = new GhidraThreadedTablePanel<>(hookTableModel);
 
 		table = tablePanel.getTable();
@@ -79,7 +77,7 @@ public class GhidraAutoDetoursComponent extends ComponentProviderAdapter {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				Msg.showInfo(getClass(), panel, GhidraAutoDetoursPlugin.GUI_NAME,
+				Msg.showInfo(getClass(), panel, SledrePlugin.GUI_NAME,
 						"Traces comments successfully added !");
 			}
 		};

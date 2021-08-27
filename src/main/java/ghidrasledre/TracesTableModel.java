@@ -1,6 +1,4 @@
-package ghidraautodetours;
-
-import java.io.IOException;
+package ghidrasledre;
 
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.docking.settings.Settings;
@@ -16,16 +14,15 @@ import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 import ghidra.util.table.field.AbstractProgramLocationTableColumn;
 import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.TaskMonitor;
-import ghidraautodetours.GhidraAutoDetoursParser.Hook;
 
-public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
+public class TracesTableModel extends AddressBasedTableModel<TracesHook> {
 
-	protected GhidraAutoDetoursTableModel(ServiceProvider serviceProvider, Program program, TaskMonitor monitor) {
+	protected TracesTableModel(ServiceProvider serviceProvider, Program program, TaskMonitor monitor) {
 		super("AutoDetours Hook Table Model", serviceProvider, program, monitor);
 		// TODO Auto-generated constructor stub
 	}
 
-	private static Address getAddressFromHook(Program program, Hook hook) {
+	private static Address getAddressFromHook(Program program, TracesHook hook) {
 		Address hookAddr = program.getAddressFactory().getDefaultAddressSpace().getAddress(hook.getRetAddr());
 		Instruction inst = program.getListing().getInstructionBefore(hookAddr);
 		return inst.getAddress();
@@ -33,12 +30,12 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 
 	@Override
 	public Address getAddress(int row) {
-		Hook hook = filteredData.get(row);
+		TracesHook hook = filteredData.get(row);
 		return getAddressFromHook(program, hook);
 	}
 
 	@Override
-	protected void doLoad(Accumulator<Hook> accumulator, TaskMonitor monitor) throws CancelledException {
+	protected void doLoad(Accumulator<TracesHook> accumulator, TaskMonitor monitor) throws CancelledException {
 		if (getProgram() == null) {
 			return;
 		}
@@ -59,8 +56,8 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 	}
 
 	@Override
-	protected TableColumnDescriptor<Hook> createTableColumnDescriptor() {
-		TableColumnDescriptor<Hook> descriptor = new TableColumnDescriptor<>();
+	protected TableColumnDescriptor<TracesHook> createTableColumnDescriptor() {
+		TableColumnDescriptor<TracesHook> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new HookLocationColumn(), 1, true);
 		descriptor.addVisibleColumn(new HookNameColumn());
@@ -79,7 +76,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 	// Inner Classes
 	// ==================================================================================================
 
-	private static class HookLocationColumn extends AbstractProgramLocationTableColumn<Hook, AddressBasedLocation> {
+	private static class HookLocationColumn extends AbstractProgramLocationTableColumn<TracesHook, AddressBasedLocation> {
 
 		@Override
 		public String getColumnName() {
@@ -87,24 +84,24 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 		}
 
 		@Override
-		public AddressBasedLocation getValue(Hook hook, Settings settings, Program program,
+		public AddressBasedLocation getValue(TracesHook hook, Settings settings, Program program,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			AddressBasedLocation addr = new AddressBasedLocation(program,
-					GhidraAutoDetoursTableModel.getAddressFromHook(program, hook));
+					TracesTableModel.getAddressFromHook(program, hook));
 			return addr;
 
 		}
 
 		@Override
-		public ProgramLocation getProgramLocation(Hook hook, Settings settings, Program program,
+		public ProgramLocation getProgramLocation(TracesHook hook, Settings settings, Program program,
 				ServiceProvider serviceProvider) {
 			return new ProgramLocation(program,
-					GhidraAutoDetoursTableModel.getAddressFromHook(program, hook));
+					TracesTableModel.getAddressFromHook(program, hook));
 		}
 
 	}
 
-	private static class HookNameColumn extends AbstractProgramBasedDynamicTableColumn<Hook, String> {
+	private static class HookNameColumn extends AbstractProgramBasedDynamicTableColumn<TracesHook, String> {
 
 		@Override
 		public String getColumnName() {
@@ -112,14 +109,14 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 		}
 
 		@Override
-		public String getValue(Hook hook, Settings settings, Program data, ServiceProvider serviceProvider)
+		public String getValue(TracesHook hook, Settings settings, Program data, ServiceProvider serviceProvider)
 				throws IllegalArgumentException {
 			// TODO Auto-generated method stub
 			return hook.getFncName();
 		}
 	}
 
-	private static class HookArgsColumn extends AbstractProgramBasedDynamicTableColumn<Hook, String> {
+	private static class HookArgsColumn extends AbstractProgramBasedDynamicTableColumn<TracesHook, String> {
 
 		@Override
 		public String getColumnName() {
@@ -127,14 +124,14 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 		}
 
 		@Override
-		public String getValue(Hook hook, Settings settings, Program data, ServiceProvider serviceProvider)
+		public String getValue(TracesHook hook, Settings settings, Program data, ServiceProvider serviceProvider)
 				throws IllegalArgumentException {
 			// TODO Auto-generated method stub
 			return String.join(", ", hook.getFncArgs());
 		}
 	}
 
-	private static class HookRetColumn extends AbstractProgramBasedDynamicTableColumn<Hook, String> {
+	private static class HookRetColumn extends AbstractProgramBasedDynamicTableColumn<TracesHook, String> {
 
 		@Override
 		public String getColumnName() {
@@ -142,7 +139,7 @@ public class GhidraAutoDetoursTableModel extends AddressBasedTableModel<Hook> {
 		}
 
 		@Override
-		public String getValue(Hook hook, Settings settings, Program data, ServiceProvider serviceProvider)
+		public String getValue(TracesHook hook, Settings settings, Program data, ServiceProvider serviceProvider)
 				throws IllegalArgumentException {
 			// TODO Auto-generated method stub
 			return hook.getFncRet();
