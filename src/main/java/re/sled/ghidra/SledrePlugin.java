@@ -16,6 +16,7 @@
 package re.sled.ghidra;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import generic.continues.RethrowContinuesFactory;
@@ -38,6 +39,9 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * TODO: Provide class-level documentation that describes what this plugin does.
@@ -57,7 +61,7 @@ import ghidra.program.util.ProgramLocation;
 //@formatter:on
 public class SledrePlugin extends ProgramPlugin {
 	public static final String NAME = "ghidrasledreplugin";
-	public static final String GUI_NAME = "sledre";
+	public static final String GUI_NAME = "Sledre";
 
 	TracesTableProvider uiProvider;
 
@@ -92,21 +96,10 @@ public class SledrePlugin extends ProgramPlugin {
 		super.dispose();
 	}
 
-	@Override
-	protected void programDeactivated(Program program) {
-		uiProvider.setProgram(null);
-	}
-
+	// Triggered when program is changed
 	@Override
 	protected void programActivated(Program program) {
 		uiProvider.setProgram(program);
-	}
-
-	@Override
-	protected void locationChanged(ProgramLocation loc) {
-		if (loc != null) {
-			uiProvider.setProgram(loc.getProgram());
-		}
 	}
 
 	private boolean canAnalyze(Program program) {
@@ -132,35 +125,6 @@ public class SledrePlugin extends ProgramPlugin {
 			}
 		}
 		return false;
-	}
-
-	public void addTracesComments() throws IOException {
-		Program program = pm.getCurrentProgram();
-		
-		SledreAPI api = new SledreAPI(new URL("http://localhost:8080/"), program);
-		Traces traces = null;
-		try {
-			traces = api.getTraces();
-		} catch (IOException | InterruptedException | MemoryAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		if (traces != null) {
-			int transId = program.startTransaction("sledreAddComment");
-			String comment;
-			for (TracesHook h : traces.getHookResults()) {
-				Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(h.getRetAddr());
-				Instruction inst = program.getListing().getInstructionBefore(addr);
-	
-				comment = String.format("%s(%s) -> %s", h.getFncName(), String.join(", ", h.getFncArgs()),
-						h.getFncRet());
-				System.out.println(comment);
-				SetCommentCmd cmd = new SetCommentCmd(inst.getAddress(), CodeUnit.PRE_COMMENT, comment); // TODO : add option to choose
-				cmd.applyTo(program);
-			}
-			program.endTransaction(transId, true);
-		}
 	}
 
 	public void startAutoDetoursAnalysis() {

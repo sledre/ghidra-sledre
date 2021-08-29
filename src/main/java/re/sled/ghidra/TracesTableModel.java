@@ -17,9 +17,12 @@ import ghidra.util.task.TaskMonitor;
 
 public class TracesTableModel extends AddressBasedTableModel<TracesHook> {
 
+	private Traces traces;
+	
 	protected TracesTableModel(ServiceProvider serviceProvider, Program program, TaskMonitor monitor) {
 		super("AutoDetours Hook Table Model", serviceProvider, program, monitor);
 		// TODO Auto-generated constructor stub
+		traces = null;
 	}
 
 	private static Address getAddressFromHook(Program program, TracesHook hook) {
@@ -36,23 +39,13 @@ public class TracesTableModel extends AddressBasedTableModel<TracesHook> {
 
 	@Override
 	protected void doLoad(Accumulator<TracesHook> accumulator, TaskMonitor monitor) throws CancelledException {
-		if (getProgram() == null) {
+		if (getProgram() == null || traces == null) {
 			return;
 		}
 
-		/*String path = "/Users/baptistin/ghidra_scripts/ed01ebfbc9eb5bbea545af4d01bf5f1071661840480439c6e5babe8e080e41aa_Detours.jsonl";
-		GhidraAutoDetoursParser parser = new GhidraAutoDetoursParser(path);
-
-		try {
-			parser.parseJson();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		for (Hook h : parser.getHookResults()) {
+		for (TracesHook h : traces.getHookResults()) {
 			accumulator.add(h);
-		}*/
+		}
 	}
 
 	@Override
@@ -67,9 +60,14 @@ public class TracesTableModel extends AddressBasedTableModel<TracesHook> {
 		return descriptor;
 	}
 
-	public void reload(Program newProgram) {
+	public void reload(Program newProgram, Traces newTraces) {
 		setProgram(newProgram);
+		setTraces(newTraces);
 		reload();
+	}
+	
+	public void setTraces(Traces newTraces) {
+		traces = newTraces;
 	}
 
 	// ==================================================================================================

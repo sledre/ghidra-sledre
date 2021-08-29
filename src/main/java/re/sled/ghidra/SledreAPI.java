@@ -23,6 +23,11 @@ public class SledreAPI {
 	private Program program;
 	
 	String sha256;
+	
+	public SledreAPI(URL url) {
+		super();
+		this.url = url;
+	}
 
 	public SledreAPI(URL url, Program program) {
 		super();
@@ -72,7 +77,6 @@ public class SledreAPI {
 		Map<String, String> headers = new HashMap<>();
 	    headers.put("Accept", "application/json");
 		HttpPostMultipart multipart = new HttpPostMultipart(malwareURL, "utf-8", headers);
-		System.out.println("toto");
 		Memory memory = program.getMemory();
 		AddressSet set = new AddressSet(memory);
 		MemoryBlock[] blocks = memory.getBlocks();
@@ -84,7 +88,6 @@ public class SledreAPI {
 
 		PipedInputStream pis = new PipedInputStream(Math.toIntExact(memory.getSize()));
 		PipedOutputStream pos = new PipedOutputStream(pis);
-		System.out.println("toto2");
 		AddressRangeIterator iter = set.getAddressRanges();
 		while (iter.hasNext()) {
 			AddressRange range = iter.next();
