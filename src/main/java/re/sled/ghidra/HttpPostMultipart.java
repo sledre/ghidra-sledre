@@ -74,19 +74,14 @@ public class HttpPostMultipart {
         writer.append("Content-Transfer-Encoding: binary").append(LINE);
         writer.append(LINE);
         writer.flush();
-		System.out.println("toto");
 
         byte[] buffer = new byte[4096];
         int bytesRead = -1;
         while ((bytesRead = in.read(buffer)) != -1) {
             outputStream.write(buffer, 0, bytesRead);
-    		System.out.println("toto1");
         }
-		System.out.println("toto2");
         outputStream.flush();
-		System.out.println("toto3");
         in.close();
-		System.out.println("toto4");
         writer.append(LINE);
         writer.flush();
     }
