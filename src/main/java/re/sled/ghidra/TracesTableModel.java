@@ -20,7 +20,7 @@ public class TracesTableModel extends AddressBasedTableModel<TracesHook> {
 	private Traces traces;
 	
 	protected TracesTableModel(ServiceProvider serviceProvider, Program program, TaskMonitor monitor) {
-		super("AutoDetours Hook Table Model", serviceProvider, program, monitor);
+		super("SledRE Hook Table Model", serviceProvider, program, monitor);
 		// TODO Auto-generated constructor stub
 		traces = null;
 	}

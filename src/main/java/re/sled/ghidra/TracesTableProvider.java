@@ -74,7 +74,7 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 
 		table = tablePanel.getTable();
 
-		table.setName("AutoDetours Results Table");
+		table.setName("SledRE Results Table");
 
 		GoToService goToService = tool.getService(GoToService.class);
 		if (goToService != null) {
