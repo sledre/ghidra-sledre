@@ -1,10 +1,9 @@
-name: Build Extension
+name: Create Release
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+    - v*
 
 jobs:
   build:
@@ -36,8 +35,10 @@ jobs:
           gradle-version: 7.2
           arguments: -PGHIDRA_INSTALL_DIR=${{ env.GHIDRA_INSTALL_DIR }}
 
-      - name: Upload extension artifacts for Ghidra ${{ matrix.version }}
-        uses: actions/upload-artifact@v2
+      - uses: svenstaro/upload-release-action@v1-release
         with:
-          name: ghidra-sledre-artifacts
-          path: dist/*.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/*ghidra-sledre.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
