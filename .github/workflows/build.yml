@@ -1,0 +1,43 @@
+name: Build Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        ghidra:  ["10.0.2", "10.0.3", "10.0.4"]
+        
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v2
+        
+      - name: Install Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: "11"
+          java-package: jdk
+          architecture: x64
+      
+      - name: Install Ghidra ${{ matrix.version }}
+        uses: er28-0652/setup-ghidra@master
+        with:
+          version: ${{ matrix.ghidra }}
+
+      - name: Build the extension for Ghidra ${{ matrix.version }}
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.2
+          arguments: -PGHIDRA_INSTALL_DIR=${{ env.GHIDRA_INSTALL_DIR }}
+
+      - name: Upload extension artifacts for Ghidra ${{ matrix.version }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: agent-artifacts
+          path: dist/*.zip
