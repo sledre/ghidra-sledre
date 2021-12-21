@@ -1,12 +1,24 @@
 package re.sled.ghidra;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
 
 import docking.ActionContext;
 import docking.WindowPosition;
@@ -39,6 +51,13 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 	private DockingAction addCommentsAction;
 	private DockingAction startAnalysisAction;
 	private DockingAction configureAPIAction;
+	
+	private JLabel statusLabel;
+	private JLabel apiURLLabel;
+	
+	private JButton configureSledreButton;
+	private JButton startButton;
+	private JButton addTracesCommentsButton;
 
 	private SledrePlugin sledrePlugin;
 	private Program currentProgram;
@@ -50,6 +69,13 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 	
 	private SledreAPI api;
 	private Traces traces;
+	
+	private class Status {
+		public static final String CONNECTED = "<html><b>Status:</b> connected to SledRE</html>";
+		public static final String ERROR = "<html><b>Status:</b> an error occured</html>";
+		public static final String RUNNING = "<html><b>Status:</b> running SledRE analysis</html>";
+		public static final String DISCONNECTED = "<html><b>Status:</b> disconnected</html>";
+	}
 
 	public TracesTableProvider(Plugin plugin, String guiName, String name) {
 		super(plugin.getTool(), guiName, name);
@@ -59,15 +85,27 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 
 		setIcon(ResourceManager.loadImage("images/logo.png"));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
-
-		buildTable();
+		
 		setVisible(true);
+		
 		createActions();
+		buildTable();
 	}
 
 	// GUI creation
 	private void buildTable() {
+		JPanel tracesPanel = new JPanel(new BorderLayout());
+		JPanel statusPanel = new JPanel(new GridBagLayout());
 		panel = new JPanel(new BorderLayout());
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.insets = new Insets(4, 8, 4, 8);
+		gbc.gridx = 0;
+		gbc.anchor = GridBagConstraints.SOUTHEAST;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.weightx = 1.0;
+		gbc.gridwidth = gbc.gridheight = 1;
+		
 
 		hookTableModel = new TracesTableModel(sledrePlugin.getTool(), currentProgram, null);
 		tablePanel = new GhidraThreadedTablePanel<>(hookTableModel);
@@ -83,9 +121,35 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, hookTableModel);
 
-		panel.add(tablePanel, BorderLayout.CENTER);
-		panel.add(tableFilterPanel, BorderLayout.SOUTH);
+		tracesPanel.add(tablePanel, BorderLayout.CENTER);
+		tracesPanel.add(tableFilterPanel, BorderLayout.SOUTH);
+		tracesPanel.setBorder(BorderFactory.createTitledBorder("Traces"));
+		
+		ImageIcon sledreIcon = new ImageIcon(ResourceManager.loadImage("images/logo.png").getImage().getScaledInstance(60, 60, Image.SCALE_DEFAULT));
+		JLabel iconLabel = new JLabel(sledreIcon, SwingConstants.CENTER);
+        statusLabel = new JLabel("", SwingConstants.LEFT);
+        statusLabel.setText(Status.DISCONNECTED);
+        apiURLLabel = new JLabel("", SwingConstants.LEFT);
+        apiURLLabel.setText("<html><b>URL:</b> not configured");
+        
+        
+        statusPanel.add(iconLabel);
+        
+        gbc.insets = new Insets(20, 16, 4, 8);
+        statusPanel.add(statusLabel, gbc);
+        gbc.insets = new Insets(4, 16, 20, 8);
+        statusPanel.add(apiURLLabel, gbc);
+        
+        gbc.insets = new Insets(4, 8, 4, 8);
+        statusPanel.add(configureSledreButton, gbc);
+        statusPanel.add(startButton, gbc);
+        statusPanel.add(addTracesCommentsButton, gbc);
+        statusPanel.setBorder(BorderFactory.createTitledBorder("SledRE"));
+        
+        panel.add(statusPanel, BorderLayout.WEST);
+        panel.add(tracesPanel, BorderLayout.CENTER);
 	}
+	
 
 	private void createActions() {
 		// Comments
@@ -96,31 +160,45 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 			}
 		};
 		addCommentsAction.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/table_go.png"), null));
-		addCommentsAction.setEnabled(true);
+		addCommentsAction.setEnabled(false);
 		addCommentsAction.markHelpUnnecessary();
 		
 		// Analysis
 		startAnalysisAction = new DockingAction("Start SledRE analysis", sledrePlugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
+				configureAPIAction.setEnabled(false);
+				addCommentsAction.setEnabled(false);
+				startAnalysisAction.setEnabled(false);
+				
+				configureSledreButton.setEnabled(false);
+				addTracesCommentsButton.setEnabled(false);
+				startButton.setEnabled(false);
 				Task t = new Task("SledRE analysis", true, false, false) {
 					@Override
 					public void run(TaskMonitor monitor) {
 						startSledreAnalysis();
+						configureAPIAction.setEnabled(true);
+						addCommentsAction.setEnabled(true);
+						startAnalysisAction.setEnabled(true);
+						
+						configureSledreButton.setEnabled(true);
+						addTracesCommentsButton.setEnabled(true);
+						startButton.setEnabled(true);
 					}
 				};
 				new TaskLauncher(t, tool.getToolFrame(), 0);
 			}
 		};
 		startAnalysisAction.setToolBarData(new ToolBarData(Icons.ADD_ICON, null));
-		startAnalysisAction.setEnabled(true);
+		startAnalysisAction.setEnabled(false);
 		startAnalysisAction.markHelpUnnecessary();
 		
 		// API config
-		configureAPIAction = new DockingAction("Add traces comments", sledrePlugin.getName()) {
+		configureAPIAction = new DockingAction("Configure SledRE URL", sledrePlugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				InputDialog userURL = new InputDialog("SledRE API URL", "URL", "http://<ip>:<port>", new InputDialogListener() {
+				InputDialog userURL = new InputDialog("SledRE URL", "URL", "http://<ip>:<port>", new InputDialogListener() {
 					@Override
 					public boolean inputIsValid(InputDialog dialog) {
 						try {
@@ -136,7 +214,11 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 				tool.showDialog(userURL);
 				if (!userURL.isCanceled()) {
 					try {
-						api = new SledreAPI(new URL(userURL.getValue()), currentProgram);
+						URL url = new URL(userURL.getValue());
+						api = new SledreAPI(url, currentProgram);
+						apiURLLabel.setText("<html><b>URL:</b> " + url.toString());
+						startAnalysisAction.setEnabled(true);
+						startButton.setEnabled(true);
 					} catch (MalformedURLException e) {
 						Msg.showError(userURL, panel, "SledRE Error", "You entered an invalid URL, please try again.");
 					}
@@ -147,16 +229,37 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 		configureAPIAction.setEnabled(true);
 		configureAPIAction.markHelpUnnecessary();
 		
+        configureSledreButton = configureAPIAction.createButton();
+        configureSledreButton.setText("Configure SledRE URL");
+        configureSledreButton.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		configureAPIAction.actionPerformed(null);
+        	}
+        });
+        startButton = startAnalysisAction.createButton();
+        startButton.setText("Start SledRE analysis");
+        startButton.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		startAnalysisAction.actionPerformed(null);
+        	}
+        });
+        addTracesCommentsButton = addCommentsAction.createButton();
+        addTracesCommentsButton.setText("Add traces comments");
+        addTracesCommentsButton.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		addCommentsAction.actionPerformed(null);
+        	}
+        });
+		
 		dockingTool.addLocalAction(this, configureAPIAction);
 		dockingTool.addLocalAction(this, startAnalysisAction);
 		dockingTool.addLocalAction(this, addCommentsAction);
 	}
 	
 	// Core
-	public void setAPIUrl(URL url) {
-		api = new SledreAPI(url, currentProgram);
-	}
-	
 	public void startSledreAnalysis() {
 		if (api != null) {
 			try {

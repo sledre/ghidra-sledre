@@ -37,7 +37,8 @@ public class SledreAPI {
 	
 	public void setProgram(Program program) {
 		this.program = program;
-		this.sha256 = program.getExecutableSHA256();
+		if (program != null)
+			this.sha256 = program.getExecutableSHA256();
 	}
 	// https://github.com/dragonGR/Ghidra/blob/decb362234d3ddfead76394b521e5669d2afac05/Ghidra/Features/Base/src/main/java/ghidra/app/util/exporter/BinaryExporter.java#L41
 	// https://github.com/dragonGR/Ghidra/blob/decb362234d3ddfead76394b521e5669d2afac05/Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/exporter/ExporterDialog.java
