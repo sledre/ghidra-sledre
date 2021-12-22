@@ -28,7 +28,9 @@ public class TracesTableModel extends AddressBasedTableModel<TracesHook> {
 	private static Address getAddressFromHook(Program program, TracesHook hook) {
 		Address hookAddr = program.getAddressFactory().getDefaultAddressSpace().getAddress(hook.getRetAddr());
 		Instruction inst = program.getListing().getInstructionBefore(hookAddr);
-		return inst.getAddress();
+		if (inst != null)
+			return inst.getAddress();
+		return null;
 	}
 
 	@Override
