@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        ghidra:  ["10.0.2", "10.0.3", "10.0.4"]
+        ghidra:  ["10.0.3", "10.0.4", "10.1"]
         
     steps:
       - name: Clone Repository
