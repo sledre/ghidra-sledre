@@ -69,7 +69,7 @@ public class SledreAPI {
 		} catch (NoSuchElementException e) {
 			job = createDetoursJob();
 			while (!job.isFinished()) {
-				Thread.sleep(10);
+				Thread.sleep(3000);
 				job = getJob(job.getId());
 			}
 		}
