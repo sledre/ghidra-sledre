@@ -40,6 +40,15 @@ public class SledreAPI {
 		if (program != null)
 			this.sha256 = program.getExecutableSHA256();
 	}
+	
+	public boolean isConnected() {
+		try {
+			Requests.connectivityCheck(url);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
+	}
 	// https://github.com/dragonGR/Ghidra/blob/decb362234d3ddfead76394b521e5669d2afac05/Ghidra/Features/Base/src/main/java/ghidra/app/util/exporter/BinaryExporter.java#L41
 	// https://github.com/dragonGR/Ghidra/blob/decb362234d3ddfead76394b521e5669d2afac05/Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/exporter/ExporterDialog.java
 

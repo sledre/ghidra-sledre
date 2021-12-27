@@ -28,6 +28,7 @@ import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.InputDialogListener;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.services.GoToService;
+import ghidra.feature.vt.gui.filters.StatusLabel;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
@@ -177,6 +178,7 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 				Task t = new Task("SledRE analysis", true, false, false) {
 					@Override
 					public void run(TaskMonitor monitor) {
+						statusLabel.setText(Status.RUNNING);
 						startSledreAnalysis();
 						configureAPIAction.setEnabled(true);
 						addCommentsAction.setEnabled(true);
@@ -185,6 +187,7 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 						configureSledreButton.setEnabled(true);
 						addTracesCommentsButton.setEnabled(true);
 						startButton.setEnabled(true);
+						statusLabel.setText(Status.CONNECTED);
 					}
 				};
 				new TaskLauncher(t, tool.getToolFrame(), 0);
@@ -216,9 +219,12 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 					try {
 						URL url = new URL(userURL.getValue());
 						api = new SledreAPI(url, currentProgram);
-						apiURLLabel.setText("<html><b>URL:</b> " + url.toString());
-						startAnalysisAction.setEnabled(true);
-						startButton.setEnabled(true);
+						if (api.isConnected()) {
+							statusLabel.setText(Status.CONNECTED);
+							apiURLLabel.setText("<html><b>URL:</b> " + url.toString());
+							startAnalysisAction.setEnabled(true);
+							startButton.setEnabled(true);
+						}
 					} catch (MalformedURLException e) {
 						Msg.showError(userURL, panel, "SledRE Error", "You entered an invalid URL, please try again.");
 					}
