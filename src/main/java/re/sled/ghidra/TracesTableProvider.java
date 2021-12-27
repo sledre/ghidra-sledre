@@ -26,8 +26,15 @@ import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.InputDialogListener;
+import generic.continues.RethrowContinuesFactory;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.services.GoToService;
+import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.format.mz.DOSHeader;
+import ghidra.app.util.bin.format.pe.Constants;
+import ghidra.app.util.opinion.BinaryLoader;
+import ghidra.app.util.opinion.PeLoader;
 import ghidra.feature.vt.gui.filters.StatusLabel;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -91,6 +98,31 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 		
 		createActions();
 		buildTable();
+	}
+	
+	private boolean canAnalyzeProgram() {
+		String format = currentProgram.getExecutableFormat();
+		if (format.equals(PeLoader.PE_NAME)) {
+			return true;
+		}
+		if (format.equals(BinaryLoader.BINARY_NAME)) {
+			MemoryByteProvider mbp = new MemoryByteProvider(currentProgram.getMemory(),
+					currentProgram.getAddressFactory().getDefaultAddressSpace());
+			try {
+				FactoryBundledWithBinaryReader reader = new FactoryBundledWithBinaryReader(
+						RethrowContinuesFactory.INSTANCE, mbp, true/* LittleEndian */);
+				DOSHeader dosHeader = DOSHeader.createDOSHeader(reader);
+				if (dosHeader.e_magic() == DOSHeader.IMAGE_DOS_SIGNATURE) {
+					int peHeaderStartIndex = dosHeader.e_lfanew();
+					int peMagicNumber = reader.readInt(peHeaderStartIndex);
+					if (peMagicNumber == Constants.IMAGE_NT_SIGNATURE) {
+						return true;
+					}
+				}
+			} catch (IOException e) {
+			}
+		}
+		return false;
 	}
 
 	// GUI creation
@@ -168,29 +200,34 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 		startAnalysisAction = new DockingAction("Start SledRE analysis", sledrePlugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				configureAPIAction.setEnabled(false);
-				addCommentsAction.setEnabled(false);
-				startAnalysisAction.setEnabled(false);
-				
-				configureSledreButton.setEnabled(false);
-				addTracesCommentsButton.setEnabled(false);
-				startButton.setEnabled(false);
-				Task t = new Task("SledRE analysis", true, false, false) {
-					@Override
-					public void run(TaskMonitor monitor) {
-						statusLabel.setText(Status.RUNNING);
-						startSledreAnalysis();
-						configureAPIAction.setEnabled(true);
-						addCommentsAction.setEnabled(true);
-						startAnalysisAction.setEnabled(true);
-						
-						configureSledreButton.setEnabled(true);
-						addTracesCommentsButton.setEnabled(true);
-						startButton.setEnabled(true);
-						statusLabel.setText(Status.CONNECTED);
-					}
-				};
-				new TaskLauncher(t, tool.getToolFrame(), 0);
+				if (canAnalyzeProgram()) {
+					configureAPIAction.setEnabled(false);
+					addCommentsAction.setEnabled(false);
+					startAnalysisAction.setEnabled(false);
+					
+					configureSledreButton.setEnabled(false);
+					addTracesCommentsButton.setEnabled(false);
+					startButton.setEnabled(false);
+					Task t = new Task("SledRE analysis", true, false, false) {
+						@Override
+						public void run(TaskMonitor monitor) {
+							statusLabel.setText(Status.RUNNING);
+							startSledreAnalysis();
+							configureAPIAction.setEnabled(true);
+							addCommentsAction.setEnabled(true);
+							startAnalysisAction.setEnabled(true);
+							
+							configureSledreButton.setEnabled(true);
+							addTracesCommentsButton.setEnabled(true);
+							startButton.setEnabled(true);
+							statusLabel.setText(Status.CONNECTED);
+						}
+					};
+					new TaskLauncher(t, tool.getToolFrame(), 0);
+				}
+				else {
+					Msg.showError(panel, panel, "SledRE Error", "SledRE only supports Windows PE binary format.");
+				}
 			}
 		};
 		startAnalysisAction.setToolBarData(new ToolBarData(Icons.ADD_ICON, null));
@@ -224,6 +261,9 @@ public class TracesTableProvider extends ComponentProviderAdapter {
 							apiURLLabel.setText("<html><b>URL:</b> " + url.toString());
 							startAnalysisAction.setEnabled(true);
 							startButton.setEnabled(true);
+						}
+						else {
+							Msg.showError(panel, panel, "SledRE Error", "SledRE API is not available, please try again.");
 						}
 					} catch (MalformedURLException e) {
 						Msg.showError(userURL, panel, "SledRE Error", "You entered an invalid URL, please try again.");
