@@ -3,6 +3,8 @@
 
 # Ghidra SledRE
 
+***This is a Proof of Concept. Exceptions may not be correctly handled and many improvements can be done. If you wish, do not hesitate to make a contribution.***
+
 Ghidra SledRE is a [ghidra](https://ghidra-sre.org/) extension able to communicate with [SledRE](https://github.com/sledre/sledre).
 
 This extension will allow you to traces a sample inside a SledRE sandbox and see the Windows syscalls made by the sample in Ghidra.
